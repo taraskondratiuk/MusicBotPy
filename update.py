@@ -146,6 +146,7 @@ def update_deps() -> None:
         "-U",
         "-r",
         "requirements.txt",
+        "--break-system-packages",
     ]
 
     # detect if venv is in use and update args.
@@ -160,7 +161,6 @@ def update_deps() -> None:
             "-U",
             "-r",
             "requirements.txt",
-            "--break-system-packages",
         ]
 
     run_or_raise_error(
@@ -242,6 +242,91 @@ def dl_windows_ffmpeg() -> None:
     # clean up the temp file.
     if os.path.isfile(tmp_ffmpeg_path):
         os.unlink(tmp_ffmpeg_path)
+
+
+def update_code():
+    # Make sure that we're in a Git repository
+    if not os.path.isdir(".git"):
+        print("not a git repo, skipping code update")
+        return
+
+    else:
+        git_bin = shutil.which("git")
+        if not git_bin:
+            raise EnvironmentError(
+                "Could not locate `git` executable.  Auto-update may not be possible.\n"
+                "Check that `git` is installed and available in your environment path."
+            )
+
+        print(f"Found git executable at:  {git_bin}")
+
+        # Make sure that we can actually use Git on the command line
+        # because some people install Git Bash without allowing access to Windows CMD
+        run_or_raise_error(
+            [git_bin, "--version"],
+            "Could not use the `git` command. You will need to run `git pull` manually.",
+            stdout=subprocess.DEVNULL,
+        )
+
+        print("Checking for current bot version and local changes...")
+        get_bot_version(git_bin)
+
+        # Check that the current working directory is clean.
+        # -suno is --short with --untracked-files=no
+        status_unclean = subprocess.check_output(
+            [git_bin, "status", "-suno", "--porcelain"], universal_newlines=True
+        )
+        if status_unclean.strip():
+            # TODO: Maybe offering a stash option here would not be so bad...
+            print(
+                "Detected the following files have been modified:\n"
+                f"{status_unclean}\n"
+                "To update MusicBot source code, you must first remove modifications made to the above source files.\n"
+                "If you want to keep your changes, consider using `git stash` or otherwise back them up before you continue.\n"
+                "This script can automatically revert your modifications, but cannot automatically save them.\n"
+            )
+            hard_reset = yes_or_no_input(
+                "WARNING:  All changed files listed above will be reset!\n"
+                "Would you like to reset the Source code, to allow MusicBot to update?"
+            )
+            if hard_reset:
+                run_or_raise_error(
+                    [git_bin, "reset", "--hard"],
+                    "Could not hard reset the directory to a clean state.\n"
+                    "You will need to manually reset the local git repository, or make a new clone of MusicBot.",
+                )
+            else:
+                do_deps = yes_or_no_input(
+                    "OK, skipping bot update. Do you still want to update dependencies?"
+                )
+                if do_deps:
+                    update_deps()
+
+                update_ffmpeg()
+                finalize()
+                return
+
+        # List some branch info.
+        branch_name = get_bot_branch(git_bin)
+        repo_url = get_bot_remote_url(git_bin)
+        if branch_name:
+            print(f"Current git branch name:  {branch_name}")
+        if repo_url:
+            print(f"Current git repo URL:  {repo_url}")
+
+        # Check for updates.
+        print("Checking remote repo for bot updates...")
+        updates = check_bot_updates(git_bin, branch_name)
+        if not updates:
+            print("No updates found for bot source code.")
+        else:
+            print(f"Updates are available, latest commit ID is:  {updates[1]}")
+            do_bot_upgrade = yes_or_no_input("Would you like to update?")
+            if do_bot_upgrade:
+                run_or_raise_error(
+                    [git_bin, "pull"],
+                    "Could not update the bot. You will need to run 'git pull' manually.",
+                )
 
 
 def update_ffmpeg() -> None:
@@ -355,90 +440,7 @@ def main() -> None:
         os.environ["PATH"] += ";" + bin_path
         sys.path.append(bin_path)  # might as well
 
-    # Make sure that we're in a Git repository
-    if not os.path.isdir(".git"):
-        raise EnvironmentError(
-            "This isn't a Git repository.  Are you running in the correct directory?\n"
-            "You must use `git clone` to install the bot or update checking cannot continue."
-        )
-
-    git_bin = shutil.which("git")
-    if not git_bin:
-        raise EnvironmentError(
-            "Could not locate `git` executable.  Auto-update may not be possible.\n"
-            "Check that `git` is installed and available in your environment path."
-        )
-
-    print(f"Found git executable at:  {git_bin}")
-
-    # Make sure that we can actually use Git on the command line
-    # because some people install Git Bash without allowing access to Windows CMD
-    run_or_raise_error(
-        [git_bin, "--version"],
-        "Could not use the `git` command. You will need to run `git pull` manually.",
-        stdout=subprocess.DEVNULL,
-    )
-
-    print("Checking for current bot version and local changes...")
-    get_bot_version(git_bin)
-
-    # Check that the current working directory is clean.
-    # -suno is --short with --untracked-files=no
-    status_unclean = subprocess.check_output(
-        [git_bin, "status", "-suno", "--porcelain"], universal_newlines=True
-    )
-    if status_unclean.strip():
-        # TODO: Maybe offering a stash option here would not be so bad...
-        print(
-            "Detected the following files have been modified:\n"
-            f"{status_unclean}\n"
-            "To update MusicBot source code, you must first remove modifications made to the above source files.\n"
-            "If you want to keep your changes, consider using `git stash` or otherwise back them up before you continue.\n"
-            "This script can automatically revert your modifications, but cannot automatically save them.\n"
-        )
-        hard_reset = yes_or_no_input(
-            "WARNING:  All changed files listed above will be reset!\n"
-            "Would you like to reset the Source code, to allow MusicBot to update?"
-        )
-        if hard_reset:
-            run_or_raise_error(
-                [git_bin, "reset", "--hard"],
-                "Could not hard reset the directory to a clean state.\n"
-                "You will need to manually reset the local git repository, or make a new clone of MusicBot.",
-            )
-        else:
-            do_deps = yes_or_no_input(
-                "OK, skipping bot update. Do you still want to update dependencies?"
-            )
-            if do_deps:
-                update_deps()
-
-            update_ffmpeg()
-            finalize()
-            return
-
-    # List some branch info.
-    branch_name = get_bot_branch(git_bin)
-    repo_url = get_bot_remote_url(git_bin)
-    if branch_name:
-        print(f"Current git branch name:  {branch_name}")
-    if repo_url:
-        print(f"Current git repo URL:  {repo_url}")
-
-    # Check for updates.
-    print("Checking remote repo for bot updates...")
-    updates = check_bot_updates(git_bin, branch_name)
-    if not updates:
-        print("No updates found for bot source code.")
-    else:
-        print(f"Updates are available, latest commit ID is:  {updates[1]}")
-        do_bot_upgrade = yes_or_no_input("Would you like to update?")
-        if do_bot_upgrade:
-            run_or_raise_error(
-                [git_bin, "pull"],
-                "Could not update the bot. You will need to run 'git pull' manually.",
-            )
-
+    update_code()
     update_deps()
     update_ffmpeg()
     finalize()
