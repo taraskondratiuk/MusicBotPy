@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Assuming no files have been moved, 
 # make sure we're in MusicBot directory...

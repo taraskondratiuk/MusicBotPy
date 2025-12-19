@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # MusicBot and this file are provided under an MIT license. 
 # Please see the LICENSE file for details.

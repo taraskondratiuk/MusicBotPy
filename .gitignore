@@ -10,9 +10,6 @@ dectalk/
 discord.log
 logs/
 data/
-config/options.ini
-config/permissions.ini
-config/aliases.json
 config/autoplaylist.txt
 config/autoplaylist_removed.txt
 config/autoplaylist.cachemap.json
@@ -25,3 +22,6 @@ media/
 
 docker-compose.yml
 config/autoplaylist.cachemap.json
+
+
+.DS_Store
