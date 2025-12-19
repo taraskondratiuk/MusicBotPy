@@ -241,7 +241,7 @@ class PIP:
         and returns the number of packages that could be updated.
         """
         updata = cls.run_install(
-            "-U -r ./requirements.txt --quiet --dry-run --report -",
+            "-U -r ./requirements.txt --quiet --break-system-packages --dry-run --report -",
             check_output=True,
         )
         try:

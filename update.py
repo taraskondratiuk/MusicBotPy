@@ -160,6 +160,7 @@ def update_deps() -> None:
             "-U",
             "-r",
             "requirements.txt",
+            "--break-system-packages",
         ]
 
     run_or_raise_error(
