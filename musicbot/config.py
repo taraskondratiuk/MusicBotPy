@@ -992,7 +992,7 @@ class Config:
 
         if not self._login_token:
             # Attempt to fallback to an environment variable.
-            env_token = os.environ.get("MUSICBOT_TOKEN")
+            env_token = os.environ.get("DISCORD_TOKEN")
             if env_token:
                 self._login_token = env_token
                 self.auth = (self._login_token,)
