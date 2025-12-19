@@ -11,11 +11,6 @@ musicbot/lib/__pycache__/
 .dockerignore
 Dockerfile
 
-# Git
-.git/
-.gitattributes
-.gitignore
-
 # IDE
 .idea/
 .vscode/
