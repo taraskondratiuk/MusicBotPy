@@ -1078,11 +1078,12 @@ class MusicBot(discord.Client):
             ):
                 newmsg = self.str.get(
                     "on_player_play-onChannel_authorNotInChannel_skipWhenAbsent",
-                    "Skipping next song in {channel}: {title} added by {author} as queuer not in voice!",
+                    "Skipping next song in {channel}: {title} added by {author} as queuer not in voice! {url}",
                 ).format(
                     channel=player.voice_client.channel.name,
                     title=entry.title,
                     author=entry.author.name,
+                    url=entry.url,
                 )
 
                 # handle history playlist updates.
@@ -1097,28 +1098,30 @@ class MusicBot(discord.Client):
             elif self.config.now_playing_mentions:
                 newmsg = self.str.get(
                     "on_player_play-onChannel_playingMention",
-                    "{author} - your song {title} is now playing in {channel}!",
+                    "{author} - your song {title} is now playing in {channel}! {url}",
                 ).format(
                     author=entry.author.mention,
                     title=entry.title,
                     channel=player.voice_client.channel.name,
+                    url=entry.url,
                 )
             else:
                 newmsg = self.str.get(
                     "on_player_play-onChannel",
-                    "Now playing in {channel}: {title} added by {author}!",
+                    "Now playing in {channel}: {title} added by {author}! {url}",
                 ).format(
                     channel=player.voice_client.channel.name,
                     title=entry.title,
                     author=entry.author.name,
+                    url=entry.url,
                 )
 
         else:
             # no author (and channel), it's an auto playlist entry.
             newmsg = self.str.get(
                 "on_player_play-onChannel_noAuthor_autoplaylist",
-                "Now playing automatically added entry {title} in {channel}!",
-            ).format(title=entry.title, channel=player.voice_client.channel.name)
+                "Now playing automatically added entry {title} in {channel}! {url}",
+            ).format(title=entry.title, channel=player.voice_client.channel.name, url=entry.url)
 
         # handle history playlist updates.
         guild = player.voice_client.guild
