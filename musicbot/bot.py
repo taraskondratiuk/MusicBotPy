@@ -1158,6 +1158,9 @@ class MusicBot(discord.Client):
             if not np_channel and last_np_msg:
                 np_channel = last_np_msg.channel
 
+            if not np_channel and entry.channel:
+                np_channel = entry.channel
+
         content = self._gen_embed()
         if self.config.embeds:
             if entry.thumbnail_url:
