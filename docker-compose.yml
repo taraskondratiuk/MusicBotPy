@@ -1,6 +1,8 @@
 services:
   musicbot:
     build: .
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
     volumes:
       - ./config:/musicbot/config/
       - ./audio_cache:/musicbot/audio_cache
